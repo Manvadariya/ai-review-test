@@ -1,15 +1,15 @@
-# Bad Code Example
-
 import os
 import logging
 
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# Violation: Hardcoded secret (Rule 3)
-API_KEY = os.getenv('API_KEY') 
+# Rule 3: Use environment variables for secrets
+API_KEY = os.getenv("API_KEY")
 
 def calculate(x, y):
-    """Calculate the sum of two numbers.
+    """
+    Calculate the sum of two numbers.
     
     Args:
         x (int): First number
@@ -21,25 +21,30 @@ def calculate(x, y):
     return x + y
 
 def get_data():
-    """Read data from file.txt.
+    """
+    Read data from file.txt safely.
     
     Returns:
-        str or None: The data from the file, or None if error.
+        str or None: The file content or None if an error occurs.
     """
+    # Rule 1: Error Handling
     try:
-        with open("file.txt") as f:
-            data = f.read()
-        return data
+        # Rule 2: Using 'with' statement for safe file handling
+        with open("file.txt", "r") as f:
+            return f.read()
+    except FileNotFoundError:
+        logging.error("File not found.")
+        return None
     except Exception as e:
         logging.error(f"Error reading file: {e}")
         return None
 
-# Violation: Variable naming (Rule 2 - should be snake_case)
+# Rule 2: Naming Conventions (snake_case)
 my_variable = 10
 
 if __name__ == "__main__":
-    # Unit test for calculate function
+    # Rule 6: Basic Unit Tests
     assert calculate(1, 2) == 3
     assert calculate(0, 0) == 0
     assert calculate(-1, 1) == 0
-    logging.info("All tests passed")
+    logging.info("All tests passed.")
