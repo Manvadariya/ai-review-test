@@ -1,16 +1,45 @@
 # Bad Code Example
 
+import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 # Violation: Hardcoded secret (Rule 3)
-API_KEY = "12345-secret-key" 
+API_KEY = os.getenv('API_KEY') 
 
 def calculate(x, y):
-    # Violation: No docstring explaining WHY (Rule 4)
+    """Calculate the sum of two numbers.
+    
+    Args:
+        x (int): First number
+        y (int): Second number
+    
+    Returns:
+        int: The sum of x and y
+    """
     return x + y
 
 def get_data():
-    # Violation: No error handling (Rule 1)
-    data = open("file.txt").read() 
-    print(data)
+    """Read data from file.txt.
+    
+    Returns:
+        str or None: The data from the file, or None if error.
+    """
+    try:
+        with open("file.txt") as f:
+            data = f.read()
+        return data
+    except Exception as e:
+        logging.error(f"Error reading file: {e}")
+        return None
 
 # Violation: Variable naming (Rule 2 - should be snake_case)
-myVariable = 10
+my_variable = 10
+
+if __name__ == "__main__":
+    # Unit test for calculate function
+    assert calculate(1, 2) == 3
+    assert calculate(0, 0) == 0
+    assert calculate(-1, 1) == 0
+    logging.info("All tests passed")
