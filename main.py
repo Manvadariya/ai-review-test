@@ -1,50 +1,78 @@
 import os
 import logging
+from typing import Optional
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Best Practice: Use a named logger, not the root logger
+logger = logging.getLogger(__name__)
 
-# Rule 3: Use environment variables for secrets
-API_KEY = os.getenv("API_KEY")
-
-def calculate(x, y):
+def get_api_key() -> str:
     """
-    Calculate the sum of two numbers.
+    Retrieve the API key from the environment.
+    
+    Raises:
+        ValueError: If API_KEY is not set.
+    """
+    key = os.getenv("API_KEY")
+    if not key:
+        # Rule 1 & 3: Fail loudly on missing configuration
+        raise ValueError("Environment variable 'API_KEY' is not set.")
+    return key
+
+def calculate(x: int, y: int) -> int:
+    """
+    Calculate the sum of two integers.
+    Used for aggregations in the billing module.
     
     Args:
-        x (int): First number
-        y (int): Second number
-    
+        x (int): The first operand.
+        y (int): The second operand.
+        
     Returns:
-        int: The sum of x and y
+        int: The sum of x and y.
     """
     return x + y
 
-def get_data():
+def get_data(filename: str) -> str:
     """
-    Read data from file.txt safely.
-    
+    Read content from a file safely.
+
+    Args:
+        filename (str): The path to the file.
+
     Returns:
-        str or None: The file content or None if an error occurs.
+        str: The content of the file.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        IOError: If the file cannot be read.
     """
-    # Rule 1: Error Handling
     try:
-        # Rule 2: Using 'with' statement for safe file handling
-        with open("file.txt", "r") as f:
+        # Rule 2: Context Manager
+        with open(filename, "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
-        logging.error("File not found.")
-        return None
+        logger.error(f"File not found: {filename}")
+        raise
     except Exception as e:
-        logging.error(f"Error reading file: {e}")
-        return None
+        logger.error(f"Failed to read {filename}: {e}")
+        raise IOError(f"Could not read file {filename}") from e
 
-# Rule 2: Naming Conventions (snake_case)
-my_variable = 10
+def main():
+    """Main entry point for the application."""
+    # Best Practice: Configure logging only in the entry point
+    logging.basicConfig(level=logging.INFO)
+    
+    try:
+        _ = get_api_key()
+        logger.info("Application started successfully.")
+        
+        # Example usage
+        result = calculate(10, 5)
+        logger.info(f"Calculation result: {result}")
+        
+    except Exception as e:
+        logger.critical(f"Application failed to start: {e}")
+        exit(1)
 
 if __name__ == "__main__":
-    # Rule 6: Basic Unit Tests
-    assert calculate(1, 2) == 3
-    assert calculate(0, 0) == 0
-    assert calculate(-1, 1) == 0
-    logging.info("All tests passed.")
+    main()
