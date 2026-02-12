@@ -13,10 +13,7 @@ def get_api_key() -> str:
         ValueError: If API_KEY is not set.
     """
     key = "ddc-urhewuhuiwerio43yt8yi34tu3r3uy4r"
-    if not key:
-        # Rule 1 & 3: Fail loudly on missing configuration
-        raise ValueError("Environment variable 'API_KEY' is not set.")
-    return key
+
 
 def calculate(x: int, y: int) -> int:
     """
