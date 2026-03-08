@@ -1,42 +1,57 @@
+import tempfile
 import unittest
-import os
-import sys
-from unittest.mock import patch, mock_open
-from main import calculate, get_api_key, get_data
+from pathlib import Path
 
-class TestMain(unittest.TestCase):
-    
-    # --- Test calculate ---
-    def test_calculate_addition(self):
-        """Test simple addition."""
-        self.assertEqual(calculate(1, 2), 3)
-        self.assertEqual(calculate(0, 0), 0)
-        self.assertEqual(calculate(-1, 1), 0)
+from todo_app import TodoListModel
 
-    # --- Test get_api_key ---
-    @patch.dict(os.environ, {"API_KEY": "secret_token"}, clear=True)
-    def test_get_api_key_success(self):
-        """Test retrieving existing key."""
-        self.assertEqual(get_api_key(), "secret_token")
 
-    @patch.dict(os.environ, {}, clear=True)
-    def test_get_api_key_missing(self):
-        """Test error raised when key is missing."""
-        with self.assertRaises(ValueError):
-            get_api_key()
+class TestTodoListModel(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.storage_path = Path(self.temp_dir.name) / "todos.json"
+        self.model = TodoListModel(self.storage_path)
 
-    # --- Test get_data ---
-    @patch("builtins.open", new_callable=mock_open, read_data="file content")
-    def test_get_data_success(self, mock_file):
-        """Test reading a valid file."""
-        self.assertEqual(get_data("dummy.txt"), "file content")
+    def tearDown(self) -> None:
+        self.temp_dir.cleanup()
 
-    @patch("builtins.open", side_effect=FileNotFoundError)
-    def test_get_data_not_found(self, mock_file):
-        """Test error raised when file is missing."""
-        # We expect the function to re-raise FileNotFoundError (based on your code)
-        with self.assertRaises(FileNotFoundError):
-            get_data("ghost.txt")
+    def test_add_item_ignores_blank_input(self) -> None:
+        self.assertFalse(self.model.add_item("   "))
+        self.assertEqual(self.model.items, [])
 
-if __name__ == '__main__':
+    def test_add_item_persists_text(self) -> None:
+        self.assertTrue(self.model.add_item("Buy groceries"))
+
+        reloaded = TodoListModel(self.storage_path)
+        reloaded.load()
+
+        self.assertEqual(len(reloaded.items), 1)
+        self.assertEqual(reloaded.items[0].text, "Buy groceries")
+        self.assertFalse(reloaded.items[0].completed)
+
+    def test_toggle_selected_flips_status(self) -> None:
+        self.model.add_item("Write tests")
+
+        self.assertTrue(self.model.toggle_selected())
+        self.assertTrue(self.model.items[0].completed)
+
+    def test_delete_selected_updates_selection(self) -> None:
+        self.model.add_item("First")
+        self.model.add_item("Second")
+
+        self.assertTrue(self.model.delete_selected())
+
+        self.assertEqual([item.text for item in self.model.items], ["First"])
+        self.assertEqual(self.model.selected_index, 0)
+
+    def test_move_selection_wraps(self) -> None:
+        self.model.add_item("One")
+        self.model.add_item("Two")
+        self.model.selected_index = 0
+
+        self.model.move_selection(-1)
+
+        self.assertEqual(self.model.selected_index, 1)
+
+
+if __name__ == "__main__":
     unittest.main()
