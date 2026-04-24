@@ -1,29 +1,37 @@
-# Pygame Todo App
+# Contact Book (Python)
 
-Simple desktop todo app built with Python and Pygame.
-
-## Install
-
-```powershell
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
+Simple project to practice CRUD operations with clean structure and software-level practices.
 
 ## Features
+- Add contact
+- Search contacts
+- Update contact
+- Delete contact
+- Save and load contacts from JSON
+- Sort contacts by `name`, `phone`, or `email`
 
-- Add tasks from the input field
-- Select tasks with the mouse or arrow keys
-- Toggle completion with the `Toggle` button or the space bar
-- Delete tasks with the `Delete` button or the delete key
-- Persist tasks to `todos.json` automatically
+## Viva Line
+"Implements CRUD operations using dictionaries."
 
-## Run
-
-```powershell
-.venv\Scripts\python.exe main.py
+## Project Structure
+```
+contact_book/
+  __init__.py
+  models.py
+  repository.py
+  service.py
+  cli.py
+main.py
+tests/
+  test_service.py
 ```
 
-## Test
+## Run
+```bash
+python main.py
+```
 
-```powershell
-.venv\Scripts\python.exe -m unittest discover -s tests
+## Run Tests
+```bash
+python -m unittest discover -s tests -p "test_*.py"
 ```

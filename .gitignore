@@ -1,2 +1,4 @@
-__pycache__/todo_app.cpython-314.pyc
-tests/__pycache__/test_main.cpython-314.pyc
+__pycache__/
+*.py[cod]
+.venv/
+contacts.json
