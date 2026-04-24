@@ -4,11 +4,12 @@ Simple project to practice CRUD operations with clean structure and software-lev
 
 ## Features
 - Add contact
-- Search contacts
+- Search contacts (partial or exact, with optional field filter)
 - Update contact
 - Delete contact
 - Save and load contacts from JSON
 - Sort contacts by `name`, `phone`, or `email`
+- Bulk add contacts with duplicate strategy: `skip`, `update`, or `error`
 
 ## Viva Line
 "Implements CRUD operations using dictionaries."
