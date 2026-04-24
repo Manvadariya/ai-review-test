@@ -76,6 +76,13 @@ class ContactBook:
         field: str = "all",
         exact: bool = False,
     ) -> list[Contact]:
+        if not isinstance(query, str):
+            raise TypeError("query must be a string")
+        if not isinstance(field, str):
+            raise TypeError("field must be a string")
+        if not isinstance(exact, bool):
+            raise TypeError("exact must be a boolean")
+
         needle = query.strip().lower()
         selected_field = field.strip().lower()
         allowed_fields = {"all", "name", "phone", "email", "address"}
@@ -113,6 +120,11 @@ class ContactBook:
         *,
         on_duplicate: str = "skip",
     ) -> dict[str, int]:
+        if not isinstance(contacts, list):
+            raise TypeError("contacts must be a list of dictionaries")
+        if not isinstance(on_duplicate, str):
+            raise TypeError("on_duplicate must be a string")
+
         mode = on_duplicate.strip().lower()
         if mode not in {"skip", "update", "error"}:
             raise ValueError("on_duplicate must be one of: skip, update, error")
@@ -122,9 +134,31 @@ class ContactBook:
 
         for index, raw_contact in enumerate(contacts, start=1):
             if not isinstance(raw_contact, dict):
-                raise ValueError(f"Invalid contact entry at index {index}.")
+                message = f"Invalid contact entry at index {index}: entry must be a dictionary."
+                if mode == "error":
+                    raise ValueError(message)
+                summary["skipped"] += 1
+                continue
 
-            candidate = Contact.from_dict(raw_contact)
+            try:
+                for required_field in ("name", "phone"):
+                    if required_field not in raw_contact:
+                        raise ValueError(f"missing required field '{required_field}'")
+                    if not isinstance(raw_contact[required_field], str):
+                        raise ValueError(f"field '{required_field}' must be a string")
+
+                for optional_field in ("email", "address"):
+                    if optional_field in raw_contact and not isinstance(raw_contact[optional_field], str):
+                        raise ValueError(f"field '{optional_field}' must be a string")
+
+                candidate = Contact.from_dict(raw_contact)
+            except (TypeError, ValueError) as exc:
+                message = f"Invalid contact entry at index {index}: {exc}"
+                if mode == "error":
+                    raise ValueError(message) from exc
+                summary["skipped"] += 1
+                continue
+
             existing = self._contacts.get(candidate.phone)
 
             if existing is None:

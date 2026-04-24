@@ -104,6 +104,18 @@ class ContactBookTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.book.search_contacts("alice", field="nickname")
 
+    def test_search_contacts_rejects_non_string_query(self) -> None:
+        self.book.add_contact(name="Alice", phone="111")
+
+        with self.assertRaises(TypeError):
+            self.book.search_contacts(None)  # type: ignore[arg-type]
+
+    def test_search_contacts_rejects_non_string_field(self) -> None:
+        self.book.add_contact(name="Alice", phone="111")
+
+        with self.assertRaises(TypeError):
+            self.book.search_contacts("alice", field=None)  # type: ignore[arg-type]
+
     def test_bulk_add_contacts_skip_duplicates(self) -> None:
         summary = self.book.bulk_add_contacts(
             [
@@ -139,6 +151,41 @@ class ContactBookTestCase(unittest.TestCase):
                 [{"name": "Alice Again", "phone": "111"}],
                 on_duplicate="error",
             )
+
+    def test_bulk_add_contacts_skips_invalid_entries_in_skip_mode(self) -> None:
+        summary = self.book.bulk_add_contacts(
+            [
+                {"name": "Alice", "phone": "111"},
+                {"name": "Missing Phone"},
+                {"name": "Bob", "phone": 222},
+                {"name": "Charlie", "phone": "333"},
+            ],
+            on_duplicate="skip",
+        )
+
+        self.assertEqual({"added": 2, "updated": 0, "skipped": 2}, summary)
+        self.assertIsNotNone(self.book.get_contact("111"))
+        self.assertIsNotNone(self.book.get_contact("333"))
+
+    def test_bulk_add_contacts_reports_invalid_index_in_error_mode(self) -> None:
+        with self.assertRaises(ValueError) as context:
+            self.book.bulk_add_contacts(
+                [
+                    {"name": "Alice", "phone": "111"},
+                    {"name": "Missing Phone"},
+                ],
+                on_duplicate="error",
+            )
+
+        self.assertIn("index 2", str(context.exception))
+
+    def test_bulk_add_contacts_rejects_invalid_contacts_argument(self) -> None:
+        with self.assertRaises(TypeError):
+            self.book.bulk_add_contacts("not-a-list")  # type: ignore[arg-type]
+
+    def test_bulk_add_contacts_rejects_non_string_on_duplicate(self) -> None:
+        with self.assertRaises(TypeError):
+            self.book.bulk_add_contacts([], on_duplicate=None)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
