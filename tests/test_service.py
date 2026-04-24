@@ -77,6 +77,69 @@ class ContactBookTestCase(unittest.TestCase):
         self.assertEqual(1, len(all_contacts))
         self.assertEqual("Alice", all_contacts[0].name)
 
+    def test_search_contacts_with_field_and_exact_match(self) -> None:
+        self.book.add_contact(
+            name="Alice Johnson",
+            phone="111",
+            email="alice@mail.com",
+            address="Delhi",
+        )
+        self.book.add_contact(
+            name="Alicia",
+            phone="222",
+            email="alicia@mail.com",
+            address="Mumbai",
+        )
+
+        exact_name = self.book.search_contacts("Alice Johnson", field="name", exact=True)
+        self.assertEqual(1, len(exact_name))
+        self.assertEqual("111", exact_name[0].phone)
+
+        name_partial = self.book.search_contacts("ali", field="name")
+        self.assertEqual(2, len(name_partial))
+
+    def test_search_contacts_rejects_invalid_field(self) -> None:
+        self.book.add_contact(name="Alice", phone="111")
+
+        with self.assertRaises(ValueError):
+            self.book.search_contacts("alice", field="nickname")
+
+    def test_bulk_add_contacts_skip_duplicates(self) -> None:
+        summary = self.book.bulk_add_contacts(
+            [
+                {"name": "Alice", "phone": "111", "email": "alice@old.com"},
+                {"name": "Alice Updated", "phone": "111", "email": "alice@new.com"},
+                {"name": "Bob", "phone": "222"},
+            ],
+            on_duplicate="skip",
+        )
+
+        self.assertEqual({"added": 2, "updated": 0, "skipped": 1}, summary)
+        self.assertEqual("alice@old.com", self.book.get_contact("111").email)
+
+    def test_bulk_add_contacts_update_duplicates(self) -> None:
+        self.book.add_contact(name="Alice", phone="111", email="alice@old.com")
+
+        summary = self.book.bulk_add_contacts(
+            [{"name": "Alice Updated", "phone": "111", "email": "alice@new.com"}],
+            on_duplicate="update",
+        )
+
+        self.assertEqual({"added": 0, "updated": 1, "skipped": 0}, summary)
+        updated = self.book.get_contact("111")
+        self.assertIsNotNone(updated)
+        self.assertEqual("Alice Updated", updated.name)
+        self.assertEqual("alice@new.com", updated.email)
+
+    def test_bulk_add_contacts_error_on_duplicates(self) -> None:
+        self.book.add_contact(name="Alice", phone="111")
+
+        with self.assertRaises(ValueError):
+            self.book.bulk_add_contacts(
+                [{"name": "Alice Again", "phone": "111"}],
+                on_duplicate="error",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
